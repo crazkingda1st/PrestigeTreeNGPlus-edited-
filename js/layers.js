@@ -7146,17 +7146,29 @@ addLayer("ma", {
 			if (player.ma.current!==null) return player.ma.mastered.concat(player.ma.current);
 			return player.ma.mastered;
 		},
-		canBeMastered() {
-			if (!player.ma.selectionActive) return [];
-			if (player.ma.mastered.length==0) return ["p"];
-			let rows = player.ma.mastered.map(x => tmp[x].row)
-			let realRows = rows.filter(y => Object.keys(ROW_LAYERS[y]).every(z => player.ma.mastered.includes(z) || tmp.ma.masteryGoal[z]===undefined));
-			let furthestRow = Math.max(...realRows)+((player.ma.current !== null)?0:1);
-			let m = Object.keys(layers).filter(x => (tmp[x].row<=furthestRow&&tmp.ma.masteryGoal[x]!==undefined&&(tmp.ma.specialReqs[x]?tmp.ma.specialReqs[x].every(y => player.ma.mastered.includes(y)):true))||player.ma.mastered.includes(x));
-			if (player.ma.current !== null) m.push(player.ma.current);
-			
-			return m;
-		},
+        canBeMastered() {
+            if (!player.ma.selectionActive) return [];
+            if (player.ma.mastered.length == 0) return ["p"];
+    
+            // Fix: Bypass the fragile row-completion math entirely.
+            // Simply check if a layer has a goal, and if its explicit special requirements are met!
+            let m = Object.keys(layers).filter(x => {
+                // Skip layers that don't have a mastery goal defined
+                if (tmp.ma.masteryGoal[x] === undefined) return false;
+        
+                // Check if the player has mastered all parent layers listed in specialReqs
+                let requirementsMet = tmp.ma.specialReqs[x] ? 
+                    tmp.ma.specialReqs[x].every(y => player.ma.mastered.includes(y)) : true;
+                    
+                return requirementsMet || player.ma.mastered.includes(x);
+            });
+    
+            if (player.ma.current !== null && !m.includes(player.ma.current)) {
+               m.push(player.ma.current);
+            }
+    
+            return m;
+        },
 		startMastery(layer) {
 			if (!confirm("Are you sure you want to start Mastering "+tmp[layer].name+"? This will force a Row 7 reset and put you in a run where only Mastered Layers & this layer will be active!")) return;
 			player.ma.current = layer;
@@ -7638,6 +7650,10 @@ addLayer("mc", {
 			if (hasAchievement("a", 173)) keep.push("milestones")
 			if (hasAchievement("a", 181)) keep.push("buyables")
 			if (hasUpgrade("pt", 31)) keep.push("upgrades")
+			
+			// FIX: Keep Cores (buyables) if the player has Planet Milestone 5
+			if (hasMilestone("pt", 5) && resettingLayer == "pt") keep.push("buyables")
+			
 			if (layers[resettingLayer].row > this.row) layerDataReset(this.layer, keep)
         },
         layerShown(){return player.ma.unlocked },
@@ -9573,7 +9589,8 @@ addLayer("pt", {
 
 return req;},              // The amount of the base needed to  gain 1 of the prestige currency.
 	autoPrestige() { return hasMilestone("pt", 6) && player.pt.auto },                           // Also the amount required to unlock the layer.
-	resetsNothing() { return hasUpgrade("pt", 44)},      
+	resetsNothing() { return hasUpgrade("pt", 44)},  
+    roundUpCost: true,
     type: "static",                         // Determines the formula used for calculating prestige currency.
     exponent: 0.5,                          // "normal" prestige gain is (currency^exponent).
 	base: new Decimal(1.05),
@@ -10804,7 +10821,8 @@ auto3: false,
 
 	return req;}   ,        // The amount of the base needed to  gain 1 of the prestige currency.
                     // Also the amount required to unlock the layer.
-					
+
+    roundUpCost: true,
     type: "static",                         // Determines the formula used for calculating prestige currency.
     exponent: new Decimal(5),                          // "normal" prestige gain is (currency^exponent).
 	base: new Decimal("1"),
@@ -11485,6 +11503,7 @@ addLayer("repair", {
 
     requires: new Decimal("e1e21"),         
    layerShown() {return player.points.gte("e1e21")}, 
+   roundUpCost: true, 
    type: "static",                         // Determines the formula used for calculating prestige currency.
    exponent: new Decimal(5),                          // "normal" prestige gain is (currency^exponent).
    base: new Decimal("1"),
@@ -11505,7 +11524,7 @@ addLayer("repair", {
 			title: "Mend the Game",
 	 display:"Mends the game, also disables Gear evolution, so it can stop from growing.",
 			
-			canClick() {return player.ge.unlocked = true},
+			canClick() {return player.ge.unlocked},
 			onClick() { 
 				if (!confirm("Your layers, except for Gears is not going to get affected, Only the gear evolutions would be paused. Please note that it ")) return;
 				
@@ -11555,6 +11574,7 @@ addLayer("co", {
 	},
     requires: new Decimal(605),         
    layerShown() {return hasUpgrade("sy",21)}, 
+   roundUpCost: true, 
    type: "static",                         // Determines the formula used for calculating prestige currency.
                       // "normal" prestige gain is (currency^exponent).
    exponent: new Decimal(1.5),
