@@ -7197,12 +7197,18 @@ addLayer("ma", {
 			doReset("ma", true);
 		},
 		specialReqs: {
+            t: ["b","g"],
+            e: ["b","g"],
+            s: ["b","g"],
 			sb: ["t","e","s"],
 			sg: ["t","e","s"],
+            q: ["sb","sg"],
 			h: ["q"],
 			o: ["q","h"],
 			ss: ["q","h"],
+            ba: ["o","ss"],
 			ps: ["m","ba"],
+            hn: ["ps"],
 			n: ["hn"],
 			hs: ["hn"],
 			i: ["n","hs"],
