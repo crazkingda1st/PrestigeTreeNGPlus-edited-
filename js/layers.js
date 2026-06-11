@@ -7207,6 +7207,7 @@ addLayer("ma", {
 			o: ["q","h"],
 			ss: ["q","h"],
             ba: ["o","ss"],
+			m: ["o","ss"],
 			ps: ["m","ba"],
             hn: ["ps"],
 			n: ["hn"],
